@@ -1,0 +1,200 @@
+// package util
+
+// import (
+// 	"fmt"
+// 	"log"
+// 	"net/http"
+// 	"strings"
+// 	"sync"
+
+// 	"github.com/gin-gonic/gin"
+// 	"github.com/gorilla/websocket"
+// )
+
+// // WebSocket upgrader
+// var upgrader = websocket.Upgrader{
+// 	CheckOrigin: func(r *http.Request) bool {
+// 		return true
+// 	},
+// }
+
+// // ChannelManager manages WebSocket connections for each channel
+// type ChannelManager struct {
+// 	clients   map[string]map[*websocket.Conn]bool
+// 	broadcast map[string]chan []byte
+// 	mutex     sync.RWMutex
+// }
+
+// // NewChannelManager initializes a new ChannelManager
+// func NewChannelManager() *ChannelManager {
+// 	return &ChannelManager{
+// 		clients:   make(map[string]map[*websocket.Conn]bool),
+// 		broadcast: make(map[string]chan []byte),
+// 	}
+// }
+
+// // Subscribe a client to a specific channel
+// func (cm *ChannelManager) Subscribe(channel string, conn *websocket.Conn) {
+// 	cm.mutex.Lock()
+// 	defer cm.mutex.Unlock()
+
+// 	if cm.clients[channel] == nil {
+// 		cm.clients[channel] = make(map[*websocket.Conn]bool)
+// 		cm.broadcast[channel] = make(chan []byte)
+// 		go cm.HandleBroadcast(channel)
+// 	}
+
+// 	cm.clients[channel][conn] = true
+// 	fmt.Printf("Client subscribed to channel: %s\n", channel)
+// }
+
+// // Unsubscribe a client from a channel
+// func (cm *ChannelManager) Unsubscribe(channel string, conn *websocket.Conn) {
+// 	cm.mutex.Lock()
+// 	defer cm.mutex.Unlock()
+
+// 	if _, ok := cm.clients[channel][conn]; ok {
+// 		delete(cm.clients[channel], conn)
+// 		conn.Close()
+// 		fmt.Printf("Client unsubscribed from channel: %s\n", channel)
+
+// 		// Clean up channel if no clients remain
+// 		if len(cm.clients[channel]) == 0 {
+// 			close(cm.broadcast[channel])
+// 			delete(cm.clients, channel)
+// 			delete(cm.broadcast, channel)
+// 			fmt.Printf("Channel closed: %s\n", channel)
+// 		}
+// 	}
+// }
+
+// // Handle broadcasting messages to a specific channel
+// func (cm *ChannelManager) HandleBroadcast(channel string) {
+// 	for message := range cm.broadcast[channel] {
+// 		cm.mutex.RLock()
+// 		for client := range cm.clients[channel] {
+// 			err := client.WriteMessage(websocket.TextMessage, message)
+// 			if err != nil {
+// 				cm.Unsubscribe(channel, client)
+// 			}
+// 		}
+// 		cm.mutex.RUnlock()
+// 	}
+// }
+
+// // SendMessage to a channel
+// func (cm *ChannelManager) SendMessage(channel string, message []byte) {
+// 	cm.mutex.RLock()
+// 	defer cm.mutex.RUnlock()
+
+// 	// Log the message to the terminal
+// 	fmt.Printf("Message received on channel [%s]: %s\n", channel, string(message))
+
+// 	if _, ok := cm.broadcast[channel]; ok {
+// 		cm.broadcast[channel] <- message
+// 	}
+// }
+
+// var channelManager = NewChannelManager()
+
+// func ManageWebSocket(w http.ResponseWriter, r *http.Request) {
+// 	// Upgrade HTTP connection to WebSocket
+// 	conn, err := upgrader.Upgrade(w, r, nil)
+// 	if err != nil {
+// 		log.Printf("Error upgrading connection: %v\n", err)
+// 		return
+// 	}
+
+// 	// Get the channel name from the query parameters
+// 	channel := r.URL.Query().Get("channel")
+// 	if !isValidChannel(channel) {
+// 		conn.WriteMessage(websocket.TextMessage, []byte("Invalid channel"))
+// 		conn.Close()
+// 		return
+// 	}
+
+// 	channelManager.Subscribe(channel, conn)
+
+// 	defer channelManager.Unsubscribe(channel, conn)
+
+// 	for {
+// 		// Read messages from the WebSocket
+// 		_, message, err := conn.ReadMessage()
+// 		if err != nil {
+// 			log.Printf("Error reading message: %v\n", err)
+// 			break
+// 		}
+
+// 		// Broadcast the message to the channel
+// 		channelManager.SendMessage(channel, message)
+// 	}
+// }
+
+// func HandleWebSocket(c *gin.Context) {
+// 	customerNo := c.Param("customer_no")
+// 	if customerNo == "" {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "customer_no is required"})
+// 		return
+// 	}
+
+// 	// Extract channel from query parameters
+// 	channel := c.Query("channel")
+// 	if !isValidChannel(channel) {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid channel"})
+// 		return
+// 	}
+
+// 	ManageWebSocket(c.Writer, c.Request)
+// }
+
+// func (cm *ChannelManager) SendMessageFromBackend(channel string, message string) {
+// 	cm.mutex.RLock()
+// 	defer cm.mutex.RUnlock()
+
+// 	// Log the message to the terminal
+// 	fmt.Printf("Sending message to channel [%s]: %s\n", channel, message)
+
+// 	if _, ok := cm.broadcast[channel]; ok {
+// 		cm.broadcast[channel] <- []byte(message)
+// 	}
+// }
+
+// func SendMessageWebSocketHandler(c *gin.Context) {
+// 	var req struct {
+// 		Channel string `json:"channel"`
+// 		Message string `json:"message"`
+// 	}
+
+// 	if err := c.BindJSON(&req); err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+// 		return
+// 	}
+
+// 	if !isValidChannel(req.Channel) {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid channel"})
+// 		return
+// 	}
+
+// 	// Send the message via WebSocket
+// 	channelManager.SendMessageFromBackend(req.Channel, req.Message)
+
+// 	c.JSON(http.StatusOK, gin.H{"status": "Message sent"})
+// }
+
+// func isValidChannel(channel string) bool {
+// 	validPrefixes := []string{
+// 		"master-data",
+// 		"operation-dispatch",
+// 		"operation-report",
+// 		"operation-fleet",
+// 		"plant-oem",
+// 	}
+
+// 	for _, prefix := range validPrefixes {
+// 		if strings.EqualFold(channel, prefix) {
+// 			return true
+// 		}
+// 	}
+
+// 	return false
+// }

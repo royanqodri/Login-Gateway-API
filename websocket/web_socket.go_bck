@@ -1,0 +1,361 @@
+// package util
+
+// import (
+// 	"encoding/json"
+// 	"fmt"
+// 	"log"
+// 	"net/http"
+// 	"sync"
+// 	"time"
+
+// 	"github.com/redis/go-redis/v9"
+
+// 	"github.com/royanqodri/Login-Gateway-API/config"
+// 	"github.com/royanqodri/Login-Gateway-API/model/notification"
+// 	"github.com/gin-gonic/gin"
+// 	"github.com/gorilla/websocket"
+// )
+
+// type WebSocketClient struct {
+// 	ID       string
+// 	Conn     *websocket.Conn
+// 	LastSeen time.Time
+// }
+
+// type ChannelClients struct {
+// 	sync.RWMutex
+// 	Clients map[string]*WebSocketClient
+// }
+
+// var (
+// 	rdb = RedisClient
+// 	ctx = Ctx
+
+// 	clients = struct {
+// 		sync.RWMutex
+// 		Channels map[string]*ChannelClients
+// 	}{
+// 		Channels: make(map[string]*ChannelClients),
+// 	}
+
+// 	upgrader = websocket.Upgrader{
+// 		CheckOrigin: func(r *http.Request) bool {
+// 			return true
+// 		},
+// 	}
+// )
+
+// var channels = make(map[string]map[*websocket.Conn]bool)
+// var mutex = &sync.Mutex{}
+
+// func EnsureChannel(channel string) *ChannelClients {
+// 	clients.Lock()
+// 	defer clients.Unlock()
+// 	if _, ok := clients.Channels[channel]; !ok {
+// 		clients.Channels[channel] = &ChannelClients{
+// 			Clients: make(map[string]*WebSocketClient),
+// 		}
+// 	}
+// 	return clients.Channels[channel]
+// }
+
+// func RegisterClient(channel, clientID string, conn *websocket.Conn) {
+
+// 	channelClients := EnsureChannel(channel)
+// 	channelClients.Lock()
+// 	channelClients.Clients[clientID] = &WebSocketClient{
+// 		ID:       clientID,
+// 		Conn:     conn,
+// 		LastSeen: time.Now(),
+// 	}
+// 	channelClients.Unlock()
+
+// 	group := fmt.Sprintf("group:%s", clientID)
+// 	_ = rdb.XGroupCreateMkStream(ctx, channel, group, "$")
+
+// 	go StreamListener(channel, group, clientID)
+// }
+
+// func UnregisterClient(channel, clientID string) {
+
+// 	clients.RLock()
+// 	channelClients, ok := clients.Channels[channel]
+// 	clients.RUnlock()
+// 	if !ok {
+// 		return
+// 	}
+
+// 	channelClients.Lock()
+// 	defer channelClients.Unlock()
+// 	delete(channelClients.Clients, clientID)
+
+// 	if len(channelClients.Clients) == 0 {
+// 		clients.Lock()
+// 		delete(clients.Channels, channel)
+// 		clients.Unlock()
+// 	}
+// }
+
+// func CleanupInactiveClients(timeout time.Duration) {
+// 	clients.RLock()
+// 	defer clients.RUnlock()
+
+// 	for channel, channelClients := range clients.Channels {
+// 		channelClients.Lock()
+// 		for clientID, client := range channelClients.Clients {
+// 			if time.Since(client.LastSeen) > timeout {
+// 				log.Printf("Client %s on %s inactive — removing", clientID, channel)
+// 				client.Conn.Close()
+// 				delete(channelClients.Clients, clientID)
+// 			}
+// 		}
+// 		channelClients.Unlock()
+// 	}
+// }
+
+// func StreamListener(channel, group, clientID string) {
+// 	ticker := time.NewTicker(2 * time.Second)
+// 	for range ticker.C {
+// 		res, err := rdb.XReadGroup(ctx, &redis.XReadGroupArgs{
+// 			Group:    group,
+// 			Consumer: clientID,
+// 			Streams:  []string{channel, ">"},
+// 			Count:    10,
+// 			Block:    5 * time.Second,
+// 		}).Result()
+// 		if err != nil && err != redis.Nil {
+// 			log.Printf("[REDIS] XReadGroup error: %v", err)
+// 			continue
+// 		}
+
+// 		for _, stream := range res {
+// 			for _, msg := range stream.Messages {
+// 				clients.RLock()
+// 				if ch, ok := clients.Channels[channel]; ok {
+// 					ch.RLock()
+// 					if client, ok := ch.Clients[clientID]; ok {
+// 						client.Conn.WriteJSON(msg.Values)
+// 					}
+// 					ch.RUnlock()
+// 				}
+// 				clients.RUnlock()
+
+// 				_ = rdb.XAck(ctx, channel, group, msg.ID)
+// 			}
+// 		}
+// 	}
+// }
+
+// func WsHandler(c *gin.Context) {
+// 	// Upgrade the connection to WebSocket
+// 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+// 	if err != nil {
+// 		c.JSON(http.StatusBadRequest, gin.H{"error": "WebSocket upgrade failed"})
+// 		return
+// 	}
+
+// 	channel := c.Query("channel")
+// 	clientID := c.Query("client_id")
+
+// 	if channel == "" || clientID == "" {
+// 		conn.WriteMessage(websocket.TextMessage, []byte("Missing channel or client_id"))
+// 		conn.Close()
+// 		return
+// 	}
+
+// 	RegisterClient(channel, clientID, conn)
+// 	defer UnregisterClient(channel, clientID)
+
+// 	// Optional: heartbeat / ping
+// 	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+// 	conn.SetPongHandler(func(string) error {
+// 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+// 		return nil
+// 	})
+
+// 	for {
+// 		if _, _, err := conn.ReadMessage(); err != nil {
+// 			log.Printf("Client %s disconnected from channel %s: %v", clientID, channel, err)
+// 			break
+// 		}
+// 	}
+// }
+
+// func HandleWebsocketConnections(c *gin.Context) {
+// 	// Upgrade the HTTP request to a WebSocket connection
+// 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+// 	if err != nil {
+// 		log.Println("WebSocket upgrade error:", err)
+// 		return
+// 	}
+// 	defer func() {
+// 		log.Println("Closing subscriber connection")
+// 		ws.Close()
+// 	}()
+
+// 	// Heartbeat: Handle pongs
+// 	done := make(chan struct{})
+// 	ws.SetReadDeadline(time.Now().Add(60 * time.Second))
+// 	ws.SetPongHandler(func(string) error {
+// 		ws.SetReadDeadline(time.Now().Add(60 * time.Second))
+// 		return nil
+// 	})
+
+// 	// Read the channel the client wants to subscribe to
+// 	var subscribe struct {
+// 		Channel string `json:"channel"`
+// 	}
+// 	if err := ws.ReadJSON(&subscribe); err != nil {
+// 		log.Println("Error reading subscription:", err)
+// 		return
+// 	}
+
+// 	// Add consumer to the channel's connection list
+// 	mutex.Lock()
+// 	if channels[subscribe.Channel] == nil {
+// 		channels[subscribe.Channel] = make(map[*websocket.Conn]bool)
+// 	}
+// 	channels[subscribe.Channel][ws] = true
+// 	mutex.Unlock()
+
+// 	// Ping periodically
+// 	go func() {
+// 		ticker := time.NewTicker(30 * time.Second)
+// 		defer ticker.Stop()
+// 		for {
+// 			select {
+// 			case <-ticker.C:
+// 				if err := ws.WriteControl(websocket.PingMessage, nil, time.Now().Add(10*time.Second)); err != nil {
+// 					log.Println("Ping error:", err)
+// 					close(done)
+// 					return
+// 				}
+// 			case <-done:
+// 				return
+// 			}
+// 		}
+// 	}()
+
+// 	// Keep the WebSocket connection alive
+// 	for {
+// 		_, _, err := ws.ReadMessage()
+// 		if err != nil {
+// 			log.Printf("Subscriber disconnected from channel %s: %v\n", subscribe.Channel, err)
+// 			break
+// 		}
+// 	}
+
+// 	// Remove the connection from the channel map on disconnection
+// 	mutex.Lock()
+// 	delete(channels[subscribe.Channel], ws)
+// 	if len(channels[subscribe.Channel]) == 0 {
+// 		delete(channels, subscribe.Channel)
+// 	}
+// 	mutex.Unlock()
+// }
+
+// func HandleWebsocketPublish(c *gin.Context) {
+// 	// Upgrade the HTTP request to a WebSocket connection (publisher)
+// 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+// 	if err != nil {
+// 		log.Println("WebSocket upgrade error:", err)
+// 		return
+// 	}
+// 	defer func() {
+// 		log.Println("Closing publisher connection")
+// 		ws.Close()
+// 	}()
+
+// 	// Read the channel and message from the publisher
+// 	var publish notification.NotificationMessage
+// 	if err := ws.ReadJSON(&publish); err != nil {
+// 		log.Println("Error reading publish data:", err)
+// 		return
+// 	}
+
+// 	// Convert the notification message to JSON
+// 	publishJSON, err := json.Marshal(publish)
+// 	if err != nil {
+// 		log.Println("Error marshalling notification:", err)
+// 		return
+// 	}
+
+// 	// Publish the message to the specified channel
+// 	mutex.Lock()
+// 	if subscribers, ok := channels[publish.Channel]; ok {
+// 		for conn := range subscribers {
+// 			err := conn.WriteMessage(websocket.TextMessage, publishJSON)
+// 			if err != nil {
+// 				log.Printf("Error sending message to consumer on channel %s: %v\n", publish.Channel, err)
+
+// 				// Remove the disconnected connection
+// 				conn.Close()
+// 				delete(subscribers, conn)
+// 			}
+// 		}
+
+// 		// If no subscribers are left, clean up the channel
+// 		if len(subscribers) == 0 {
+// 			delete(channels, publish.Channel)
+// 		}
+// 	}
+// 	mutex.Unlock()
+
+// 	// Acknowledge that the message was sent
+// 	err = ws.WriteMessage(websocket.TextMessage, []byte("Message sent to channel: "+publish.Channel))
+// 	if err != nil {
+// 		log.Println("Error acknowledging message:", err)
+// 	}
+// }
+
+// func SendNotification(notificationMessage notification.NotificationMessage) error {
+// 	notificationMessage.Timestamp = time.Now().Format("2006-01-02 15:04:05")
+// 	serverURL := config.Get().WebSocketServer
+
+// 	conn, _, err := websocket.DefaultDialer.Dial(serverURL, nil)
+// 	if err != nil {
+// 		log.Println("WebSocket connection error:", err)
+// 		return fmt.Errorf("failed to connect to WebSocket server: %w", err)
+// 	}
+// 	defer func() {
+// 		if err := conn.Close(); err != nil {
+// 			log.Println("Error closing WebSocket connection:", err)
+// 		}
+// 	}()
+
+// 	notificationMessage.Channel = fmt.Sprintf("%s:%s:%s", notificationMessage.CustomerNo, notificationMessage.Site, notificationMessage.Channel)
+
+// 	message, err := json.Marshal(notificationMessage)
+// 	if err != nil {
+// 		log.Println("Error marshalling notification message:", err)
+// 		return fmt.Errorf("failed to marshal notification: %w", err)
+// 	}
+
+// 	err = conn.WriteMessage(websocket.TextMessage, message)
+// 	if err != nil {
+// 		log.Println("Error sending message:", err)
+// 		return fmt.Errorf("failed to send notification: %w", err)
+// 	}
+
+// 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+// 	_, response, err := conn.ReadMessage()
+// 	if err != nil {
+// 		log.Println("Error reading acknowledgment response:", err)
+// 		return fmt.Errorf("failed to read acknowledgment: %w", err)
+// 	}
+
+// 	log.Println("Response from server:", string(response))
+// 	return nil
+// }
+
+// func CleanupWebSocket() {
+// 	mutex.Lock()
+// 	defer mutex.Unlock()
+// 	for channel, subscribers := range channels {
+// 		for conn := range subscribers {
+// 			conn.Close()
+// 		}
+// 		delete(channels, channel)
+// 	}
+// 	log.Println("Cleaned up WebSocket connections")
+// }

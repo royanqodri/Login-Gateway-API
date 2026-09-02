@@ -1,0 +1,615 @@
+basePath: /
+definitions:
+  github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage:
+    properties:
+      activity:
+        type: string
+      altitude:
+        type: number
+      bearing:
+        type: number
+      category:
+        type: string
+      channel:
+        type: string
+      content:
+        type: string
+      customer_no:
+        type: string
+      date_log:
+        type: string
+      equipment_model:
+        type: string
+      equipment_no:
+        type: string
+      equipment_type:
+        type: string
+      event:
+        type: string
+      fleet:
+        type: string
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+      reason:
+        type: string
+      shift:
+        type: string
+      shift_sequence:
+        type: integer
+      site:
+        type: string
+      state:
+        type: string
+      status_activity:
+        type: string
+      time_log:
+        type: string
+      timestamp:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_request.LoginRequest:
+    properties:
+      menu:
+        type: string
+      password:
+        type: string
+      site:
+        type: string
+      username:
+        type: string
+    required:
+    - menu
+    - password
+    - username
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_request.TUserPostDetailRequest:
+    properties:
+      blood_type:
+        type: string
+      email_address:
+        type: string
+      id:
+        type: integer
+      id_customer:
+        type: integer
+      insert_by:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone_no:
+        type: string
+      type:
+        type: string
+      update_by:
+        type: string
+      username:
+        type: string
+    required:
+    - blood_type
+    - email_address
+    - id_customer
+    - name
+    - password
+    - phone_no
+    - type
+    - username
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_request.TUserPostRequest:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_request.TUserPostDetailRequest'
+        type: array
+    required:
+    - data
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.LoginMainResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.LoginResponse'
+        type: array
+      data_header: {}
+      status_response:
+        $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.StatusResponse'
+      total_data:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.LoginResponse:
+    properties:
+      customer_no:
+        type: string
+      id_customer:
+        type: integer
+      name:
+        type: string
+      token:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.MainResponse:
+    properties:
+      data: {}
+      data_header: {}
+      status_response:
+        $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.StatusResponse'
+      total_data:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.SessionDataMainResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.SessionDataResponse'
+        type: array
+      data_header: {}
+      status_response:
+        $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.StatusResponse'
+      total_data:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.SessionDataResponse:
+    properties:
+      blood_type:
+        type: string
+      customer_no:
+        type: string
+      data_modules:
+        items:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.TUserModuleResponse'
+        type: array
+      email_address:
+        type: string
+      id_customer:
+        type: integer
+      id_user:
+        type: integer
+      name:
+        type: string
+      phone_no:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.StatusResponse:
+    properties:
+      message:
+        type: string
+      status_code:
+        type: integer
+      status_text:
+        type: string
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.TUserGetResponse:
+    properties:
+      blood_type:
+        type: string
+      customer_no:
+        type: string
+      email_address:
+        type: string
+      id:
+        type: integer
+      id_customer:
+        type: integer
+      insert_by:
+        type: string
+      insert_time:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone_no:
+        type: string
+      status_data:
+        type: string
+      update_by:
+        type: string
+      update_time:
+        type: string
+      username:
+        type: string
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.TUserMainResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.TUserGetResponse'
+        type: array
+      data_header: {}
+      status_response:
+        $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.StatusResponse'
+      total_data:
+        type: integer
+      total_page:
+        type: integer
+    type: object
+  github_com_royanqodri_Login-Gateway-API_model_response.TUserModuleResponse:
+    properties:
+      create_access:
+        type: boolean
+      delete_access:
+        type: boolean
+      export_access:
+        type: boolean
+      module:
+        type: string
+      read_access:
+        type: boolean
+      update_access:
+        type: boolean
+    type: object
+host: localhost:9001
+info:
+  contact: {}
+  description: API Documentation for Login Gateway Service
+  title: Login Gateway API
+  version: "1.0"
+paths:
+  /mintegra/login:
+    post:
+      consumes:
+      - application/json
+      description: Create Authenticate user, store in redis, and return a JWT token
+      parameters:
+      - description: Login Post Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.LoginMainResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      summary: Login With Redis
+      tags:
+      - Login
+  /mintegra/notification/post:
+    post:
+      consumes:
+      - application/json
+      description: Send POST Notification to WebSocket
+      parameters:
+      - description: Data POST Notification
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: POST Notification sent!
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid JSON format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to send notification
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: POST Notification
+      tags:
+      - Websocket
+  /mintegra/notification/pub:
+    get:
+      description: Get Publish Notification
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: WebSocket connection established
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      summary: Publish Notification WebSocket
+      tags:
+      - Websocket
+  /mintegra/notification/sos:
+    post:
+      consumes:
+      - application/json
+      description: Send SOS Notification to WebSocket
+      parameters:
+      - description: Data SOS Notification
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: SOS Notification sent!
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid JSON format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to send notification
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: SOS Notification
+      tags:
+      - Websocket
+  /mintegra/notification/sub:
+    get:
+      description: Get Subscribe Notification
+      parameters:
+      - description: |-
+          Channel format. Contoh nilai yang valid:
+          1. customer_no:site:master-data
+          2. customer_no:site:opr-dispatch
+          3. customer_no:site:opr-report
+          4. customer_no:site:opr-fleet
+          5. customer_no:site:plant-oem
+          6. customer_no:site:all
+        in: query
+        name: channel
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "101":
+          description: WebSocket connection established
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      summary: Subscribe to Notification WebSocket
+      tags:
+      - Websocket
+  /mintegra/notification/test:
+    post:
+      consumes:
+      - application/json
+      description: Test Notification to WebSocket
+      parameters:
+      - description: Data Test Notification
+        in: body
+        name: notification
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_notification.NotificationMessage'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Notification sent!
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid JSON format
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Failed to send notification
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Test Notification
+      tags:
+      - Websocket
+  /session-data:
+    get:
+      consumes:
+      - application/json
+      description: Get Session Data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.SessionDataMainResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Session Data
+      tags:
+      - Session
+  /user:
+    get:
+      consumes:
+      - application/json
+      description: Get list of User by filter
+      parameters:
+      - description: Customer No
+        in: path
+        name: customer_no
+        required: true
+        type: string
+      - description: Site
+        in: query
+        name: site
+        type: string
+      - description: Department
+        in: query
+        name: department
+        type: string
+      - description: Section
+        in: query
+        name: section
+        type: string
+      - description: Position
+        in: query
+        name: position
+        type: string
+      - description: Username
+        in: query
+        name: username
+        type: string
+      - description: Name
+        in: query
+        name: name
+        type: string
+      - description: Crew
+        in: query
+        name: crew
+        type: string
+      - description: Phone Number
+        in: query
+        name: phone_no
+        type: string
+      - description: Status Data
+        in: query
+        name: status_data
+        type: string
+      - description: Source
+        in: query
+        name: source
+        required: true
+        type: string
+      - description: Last Update Time
+        format: '"2006-01-02 15:04:05"'
+        in: query
+        name: last_time
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.TUserMainResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Master User
+      tags:
+      - Master User
+    post:
+      consumes:
+      - application/json
+      description: Create one or more master User entries
+      parameters:
+      - description: Customer No
+        in: path
+        name: customer_no
+        required: true
+        type: string
+      - description: User Post Payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_request.TUserPostRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_royanqodri_Login-Gateway-API_model_response.MainResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Master User
+      tags:
+      - Master User
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
