@@ -5,6 +5,7 @@ type LoginResponse struct {
 	CustomerNo string `json:"customer_no"`
 	Username   string `json:"username"`
 	Name       string `json:"name"`
+	Email      string `json:"email"`
 	Token      string `json:"token"`
 }
 

@@ -10,13 +10,13 @@ import (
 	"github.com/royanqodri/Login-Gateway-API/config"
 )
 
-func GenerateToken(idUser int64, username string, site string, module string, customerNo string, customerId int64) (string, error) {
+func GenerateToken(idUser int64, username string, email string, module string, customerNo string, customerId int64) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"customer_id": customerId,
 		"customer_no": customerNo,
 		"user_id":     idUser,
 		"username":    username,
-		"site":        site,
+		"email":       email,
 		"module":      module,
 		"source":      "web_mobile",
 		"exp":         GetTimeNowByLoc().Add(time.Duration(config.Get().JWT.Expire) * time.Second).Unix(),

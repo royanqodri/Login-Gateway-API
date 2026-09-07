@@ -20,6 +20,7 @@ type Config struct {
 	Swagger         SwaggerConfig
 	Google          GoogleConfig
 	Facebook        FacebookConfig
+	Apple           AppleConfig
 }
 
 type ServiceConfig struct {
@@ -110,4 +111,8 @@ type GoogleConfig struct {
 type FacebookConfig struct {
 	AppId     string
 	AppSecret string
+}
+
+type AppleConfig struct {
+	ClientId string // bundle ID (iOS) atau Services ID (web/android)
 }

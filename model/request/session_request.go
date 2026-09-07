@@ -30,3 +30,7 @@ type GoogleLoginRequest struct {
 type FacebookLoginRequest struct {
 	AccessToken string `json:"access_token" binding:"required"`
 }
+
+type AppleLoginRequest struct {
+	IdToken string `json:"id_token" binding:"required"`
+}

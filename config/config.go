@@ -139,6 +139,10 @@ func Init() error {
 		AppSecret: v.GetString("FACEBOOK_APP_SECRET"),
 	}
 
+	config.Apple = AppleConfig{
+		ClientId: v.GetString("APPLE_CLIENT_ID"),
+	}
+
 	return nil
 }
 

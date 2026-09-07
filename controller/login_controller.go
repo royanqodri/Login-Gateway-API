@@ -20,6 +20,7 @@ type LoginController interface {
 	LoginWithRedis(ctx *gin.Context)
 	LoginWithGoogle(ctx *gin.Context)
 	LoginWithFacebook(ctx *gin.Context)
+	LoginWithApple(ctx *gin.Context)
 }
 
 type LoginControllerImpl struct {
@@ -133,6 +134,25 @@ func (controller *LoginControllerImpl) LoginWithFacebook(ctx *gin.Context) {
 	}
 
 	resp, err := controller.loginService.LoginWithFacebook(ctx, req.AccessToken)
+	if err != nil {
+		util.WriteResponse(ctx, util.JSON, http.StatusInternalServerError, []any{}, []any{}, fmt.Sprintf("%v", err), 0, 0)
+		return
+	}
+
+	// write response
+	util.WriteResponse(ctx, util.JSON, http.StatusOK, []any{}, resp, "success", 0, 0)
+}
+
+func (controller *LoginControllerImpl) LoginWithApple(ctx *gin.Context) {
+	// validate request payload
+	req := request.AppleLoginRequest{}
+	err := ctx.ShouldBindJSON(&req)
+	if err != nil {
+		util.WriteResponse(ctx, util.JSON, http.StatusBadRequest, []any{}, []any{}, fmt.Sprintf("%v", err), 0, 0)
+		return
+	}
+
+	resp, err := controller.loginService.LoginWithApple(ctx, req.IdToken)
 	if err != nil {
 		util.WriteResponse(ctx, util.JSON, http.StatusInternalServerError, []any{}, []any{}, fmt.Sprintf("%v", err), 0, 0)
 		return

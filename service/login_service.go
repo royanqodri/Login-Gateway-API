@@ -22,6 +22,7 @@ type LoginService interface {
 	// OnboardGenerateToken(ctx *gin.Context, request request.OnboardRequest) (response.OnboardResponse, error)
 	LoginWithGoogle(ctx *gin.Context, idToken string) (response.LoginResponse, error)
 	LoginWithFacebook(ctx *gin.Context, accessToken string) (response.LoginResponse, error)
+	LoginWithApple(ctx *gin.Context, identityToken string) (response.LoginResponse, error)
 	StoreSessionInRedis(ctx *gin.Context, customerNo string, username string, site string, module string, token string, userModules []response.TUserModuleGetResponse, ttl time.Duration) error
 	GetUserModules(ctx *gin.Context, request request.RedisRequest) ([]response.TUserModuleGetResponse, error)
 }
@@ -231,6 +232,44 @@ func (service LoginServiceImpl) LoginWithFacebook(ctx *gin.Context, accessToken 
 		CustomerNo: user.CustomerNo,
 		Username:   user.Username,
 		Name:       user.Name,
+		Token:      token,
+	}
+
+	return loginResponse, nil
+}
+
+func (service LoginServiceImpl) LoginWithApple(ctx *gin.Context, identityToken string) (response.LoginResponse, error) {
+
+	appleUser, err := util.VerifyAppleIDToken(identityToken)
+	if err != nil {
+		return response.LoginResponse{}, util.NewErrorMessage(401, "INVALID_APPLE_TOKEN", err)
+	}
+
+	user, err := service.mstUserRepo.GetByUsernameOrEmail(ctx, nil, appleUser.Email)
+	if err != nil {
+		return response.LoginResponse{}, err
+	}
+
+	if user.Id == 0 {
+		return response.LoginResponse{}, util.NewErrorMessage(400, constants.USER_NOT_FOUND, nil)
+
+		// user, err = service.mstUserRepo.CreateFromApple(ctx, appleUser)
+		// if err != nil {
+		// 	return response.LoginResponse{}, err
+		// }
+	}
+
+	token, err := util.GenerateToken(user.Id, user.Username, "", "", user.CustomerNo, user.IdCustomer)
+	if err != nil {
+		return response.LoginResponse{}, err
+	}
+
+	loginResponse := response.LoginResponse{
+		IdCustomer: user.IdCustomer,
+		CustomerNo: user.CustomerNo,
+		Username:   user.Username,
+		Name:       user.Name,
+		Email:      appleUser.Email,
 		Token:      token,
 	}
 

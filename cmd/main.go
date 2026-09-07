@@ -164,6 +164,7 @@ func initRouter() {
 	router.POST("/login", loginController.Login)
 	router.POST("/login/google", loginController.LoginWithGoogle)
 	router.POST("/login/facebook", loginController.LoginWithFacebook)
+	router.POST("/login/apple", loginController.LoginWithApple)
 
 	router.POST("/user", tUserController.Post)
 	router.GET("/user", tUserController.GetAll)
