@@ -145,32 +145,6 @@ func HandleWebsocketPublish(c *gin.Context) {
 		const defaultToleranceMinutes = 15
 		toleranceMinutes := defaultToleranceMinutes
 
-		// customerRepo := repository.NewMstCustomerRepository()
-		// dataCustomer, errCustomer := customerRepo.GetByCustomerNo(c, nil, publish.CustomerNo)
-		// if errCustomer != nil {
-		// 	log.Printf("Warning: customer '%s' not found: %v → using default tolerance %d min", publish.CustomerNo, errCustomer, defaultToleranceMinutes)
-		// 	dataCustomer = entity.MstCustomer{}
-		// }
-
-		// settingRepo := repository.NewMstSettingRepository()
-		// settingRequest := request.MstSettingGetRequest{
-		// 	Parameter:  "notification_tolerance_time",
-		// 	Parameters: []string{"notification_tolerance_time"},
-		// }
-
-		// settingMap, errSetting := settingRepo.GetByParamsINKeyValue(c, nil, dataCustomer, settingRequest)
-		// if errSetting != nil {
-		// 	log.Printf("Warning: failed to fetch notification_tolerance_time: %v → using default %d min", errSetting, defaultToleranceMinutes)
-		// } else if val, ok := settingMap["notification_tolerance_time"]; ok && val != "" {
-		// 	if parsed, errParse := strconv.Atoi(val); errParse == nil && parsed > 0 {
-		// 		toleranceMinutes = parsed
-		// 	} else {
-		// 		log.Printf("Warning: invalid notification_tolerance_time value '%s' → using default %d min", val, defaultToleranceMinutes)
-		// 	}
-		// } else {
-		// 	log.Printf("notification_tolerance_time not set in mst_setting → using default %d min", defaultToleranceMinutes)
-		// }
-
 		// =============================================
 		// Insert into t_notifications
 		// =============================================
@@ -184,29 +158,20 @@ func HandleWebsocketPublish(c *gin.Context) {
 			CustomerNo:     publish.CustomerNo,
 			DateLog:        util.GetFormattedDate(publish.DateLog),
 			TimeLog:        timeLog,
-			Shift:          publish.Shift,
-			ShiftSequence:  publish.ShiftSequence,
-			EquipmentNo:    publish.EquipmentNo,
-			EquipmentType:  publish.EquipmentType,
-			EquipmentModel: publish.EquipmentModel,
 			Username:       publish.Username,
 			Name:           publish.Name,
-			Fleet:          publish.Fleet,
-			State:          publish.State,
 			Reason:         publish.Reason,
 			Activity:       publish.Activity,
 			StatusActivity: publish.StatusActivity,
 			Latitude:       publish.Latitude,
 			Longitude:      publish.Longitude,
 			Altitude:       publish.Altitude,
-			Bearing:        publish.Bearing,
 			Channel:        publish.Channel,
 			Category:       publish.Category,
 			Title:          publish.Title,
 			Content:        publish.Content,
 			Type:           publish.Type,
 			Event:          publish.Event,
-			Site:           publish.Site,
 			InsertBy:       currentUser,
 			InsertTime:     util.GetTimeNowByLoc(),
 			UpdateBy:       currentUser,
@@ -319,7 +284,6 @@ func SendNotification(notificationMessage notification.NotificationMessage) erro
 
 	notificationMessage.Channel = fmt.Sprintf("%s:%s:%s",
 		notificationMessage.CustomerNo,
-		notificationMessage.Site,
 		notificationMessage.Channel,
 	)
 
